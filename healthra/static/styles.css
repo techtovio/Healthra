@@ -1,0 +1,53 @@
+/* Smooth page load transition */
+body {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Hover animation for buttons */
+.btn {
+    transition: all 0.3s ease-in-out;
+}
+.btn:hover {
+    transform: scale(1.05);
+}
+
+/* Animated card effect */
+.card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth button hover */
+.btn {
+    transition: all 0.3s ease-in-out;
+}
+.btn:hover {
+    transform: scale(1.05);
+}
+
+/* Loading spinner */
+#loading {
+    text-align: center;
+    font-size: 20px;
+    color: blue;
+    display: none;
+}
+
+/* Messages fade-in */
+.alert {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

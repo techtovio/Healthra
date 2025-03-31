@@ -1,0 +1,21 @@
+<!-- Success Alert -->
+<div id="success-alert" class="alert alert-success fade show" role="alert" style="display: none;">
+    <strong>Success!</strong> <span id="success-message"></span>
+</div>
+
+<!-- Error Alert -->
+<div id="error-alert" class="alert alert-danger fade show" role="alert" style="display: none;">
+    <strong>Error!</strong> <span id="error-message"></span>
+</div>
+
+<script>
+    function showSuccess(message) {
+        $("#success-message").text(message);
+        $("#success-alert").fadeIn().delay(3000).fadeOut();
+    }
+
+    function showError(message) {
+        $("#error-message").text(message);
+        $("#error-alert").fadeIn().delay(3000).fadeOut();
+    }
+</script>
