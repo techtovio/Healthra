@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}Insurance Dashboard{% endblock %}
+
+{% block page_title %}Insurance Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-method {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    .payment-method:hover {
+        border-color: var(--primary);
+        box-shadow: 0 0 10px rgba(78, 115, 223, 0.2);
+    }
+    .receipt-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Current Plan -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Insurance Plan</h5>
+                {% if active_insurance %}
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#receiptModal">
+                    <i class="fas fa-receipt me-1"></i> Generate Receipt
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if active_insurance %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>{{ active_insurance.plan.get_plan_type_display }}</h3>
+                        <p class="text-muted">{{ active_insurance.plan.description }}</p>
+                        <ul class="list-unstyled">
+                            {% for key, value in active_insurance.plan.coverage_details.items %}
+                            <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card p-3 mb-3">
+                            <h6>Payment Frequency</h6>
+                            <h4>{{ active_insurance.get_payment_frequency_display }}</h4>
+                        </div>
+                        <div class="stat-card p-3 mb-3">
+                            <h6>Next Payment Due</h6>
+                            <h4>{{ active_insurance.next_payment_date }}</h4>
+                            <h6>Amount: {{ active_insurance.hbar_cost }} HBAR</h6>
+                        </div>
+                        <div class="stat-card p-3 mb-3 success">
+                            <h6>Coverage Status</h6>
+                            <h4>Active until {{ active_insurance.end_date }}</h4>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-shield-alt fa-4x text-muted mb-3"></i>
+                    <h4>No Active Insurance</h4>
+                    <p class="text-muted">You don't have an active insurance plan</p>
+                    <a href="{% url 'select-plan' %}" class="btn btn-primary">
+                        Get Insurance Coverage
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet & Payment Section -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="payment-method">
+                    <h6><i class="fas fa-coins me-2"></i>Pay with HLT Tokens</h6>
+                    <p class="text-muted">Current Balance: {{ hlt_balance }} HLT</p>
+                    
+                    <form method="post" action="{% url 'buy-hlt' %}">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <input type="number" class="form-control" name="amount" placeholder="HLT Amount" min="1" step="1">
+                            <button class="btn btn-primary" type="submit">Buy HLT</button>
+                        </div>
+                    </form>
+                    
+                    {% if active_insurance %}
+                    <form method="post" action="{% url 'pay-with-hlt' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="insurance_id" value="{{ active_insurance.id }}">
+                        <button class="btn btn-success w-100" type="submit">
+                            Pay {{ active_insurance.hbar_cost }} HBAR with HLT
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <div class="payment-method">
+                    <h6><i class="fas fa-money-bill-wave me-2"></i>Fiat Deposit</h6>
+                    <form method="post" action="{% url 'fiat-deposit' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Amount (USD)</label>
+                            <input type="number" class="form-control" name="amount" placeholder="100.00" min="10" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" name="method">
+                                <option value="credit_card">Credit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="paypal">PayPal</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">
+                            Deposit Funds
+                        </button>
+                    </form>
+                </div>
+
+                <div class="payment-method">
+                    <h6><i class="fas fa-exchange-alt me-2"></i>Token Conversion</h6>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <input type="number" class="form-control" name="amount" placeholder="HBAR Amount" min="1" step="0.01">
+                            <button class="btn btn-outline-primary" type="submit">
+                                Convert to HLT
+                            </button>
+                        </div>
+                        <small class="text-muted">Current rate: 1 HBAR = {{ hbar_to_hlt_rate }} HLT</small>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Transactions</h5>
+                <a href="{% url 'wallet-history' %}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in recent_transactions %}
+                            <tr>
+                                <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>{{ tx.get_transaction_type_display }}</td>
+                                <td>
+                                    {% if tx.currency == 'HLT' %}
+                                    {{ tx.amount }} HLT
+                                    {% else %}
+                                    {{ tx.amount }} HBAR
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if tx.status == 'COMPLETED' %}success{% elif tx.status == 'PENDING' %}warning{% else %}danger{% endif %}">
+                                        {{ tx.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if tx.status == 'COMPLETED' %}
+                                    <a href="" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-receipt"></i> Download
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recent transactions</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Insurance Receipt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="receipt-box mb-4">
+                    <h4>Healthra Insurance Receipt</h4>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Member:</strong> {{ request.user.get_full_name }}</p>
+                            <p><strong>Plan:</strong> {{ active_insurance.plan.get_plan_type_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Period:</strong> {{ active_insurance.start_date }} to {{ active_insurance.end_date }}</p>
+                            <p><strong>Amount Paid:</strong> {{ active_insurance.hbar_cost }} HBAR</p>
+                        </div>
+                    </div>
+                </div>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Receipt Type</label>
+                        <select class="form-select" name="receipt_type">
+                            <option value="pdf">PDF Document</option>
+                            <option value="html">Web Page</option>
+                            <option value="email">Email Receipt</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Generate Receipt</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-calculate HLT amount based on HBAR input
+document.querySelector('[name="amount"]').addEventListener('input', function(e) {
+    const hbarAmount = parseFloat(e.target.value);
+    if (!isNaN(hbarAmount)) {
+        const hltAmount = hbarAmount * {{ hbar_to_hlt_rate }};
+        document.getElementById('hltAmount').textContent = hltAmount.toFixed(2) + ' HLT';
+    }
+});
+
+// Handle receipt generation
+document.getElementById('generateReceipt').addEventListener('click', function() {
+    const receiptType = document.querySelector('[name="receipt_type"]').value;
+    const notes = document.querySelector('[name="notes"]').value;
+    
+    // In a real implementation, this would make an AJAX call
+    alert(`Generating ${receiptType} receipt with notes: ${notes}`);
+    $('#receiptModal').modal('hide');
+});
+</script>
+{% endblock %}

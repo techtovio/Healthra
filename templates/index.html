@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthra - Decentralized Healthcare Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/countup.js@2.6.0/dist/countUp.min.js"></script>
+    <style>
+        :root {
+            --primary: #4e73df;
+            --secondary: #1cc88a;
+            --dark: #5a5c69;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            color: white;
+            padding: 5rem 0;
+        }
+        .token-card {
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .token-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card {
+            border-left: 4px solid var(--primary);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .tokenomics-section {
+            background-color: #f8f9fc;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-heartbeat me-2"></i>Healthra
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tokenomics">Tokenomics</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-primary ms-2" href="{% url 'insurance-dashboard' %}">Launch App</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Decentralized Healthcare Powered by HLT</h1>
+                    <p class="lead mb-4">Access affordable healthcare services, earn rewards, and take control of your medical data with Healthra's blockchain-powered platform.</p>
+                    <div class="d-flex gap-3">
+                        <a href="/wallet/" class="btn btn-light btn-lg px-4">Get Started</a>
+                        <a href="#tokenomics" class="btn btn-outline-light btn-lg px-4">Learn About HLT</a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="token-card p-4 bg-white text-dark mt-4 mt-lg-0">
+                        <h3 class="mb-4"><i class="fas fa-coins me-2"></i>HLT Token Live Data</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="stat-card p-3">
+                                    <h6 class="text-muted">PRICE</h6>
+                                    <h3 class="fw-bold" id="tokenPrice">$0.10</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="stat-card p-3">
+                                    <h6 class="text-muted">MARKET CAP</h6>
+                                    <h3 class="fw-bold" id="marketCap">$0.00</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="stat-card p-3">
+                                    <h6 class="text-muted">CIRCULATING</h6>
+                                    <h3 class="fw-bold" id="circulatingSupply">0 HLT</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="stat-card p-3">
+                                    <h6 class="text-muted">TOTAL SUPPLY</h6>
+                                    <h3 class="fw-bold" id="totalSupply">100,000,000 HLT</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Revolutionizing Healthcare</h2>
+                <p class="lead text-muted">Healthra combines blockchain technology with healthcare services</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h4>Telemedicine</h4>
+                        <p class="text-muted">Consult with healthcare specialists from anywhere in the world using HLT tokens.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4>Secure Records</h4>
+                        <p class="text-muted">Your medical data is securely stored on the Hedera Hashgraph network.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <h4>Decentralized Insurance</h4>
+                        <p class="text-muted">Participate in community-based insurance pools with transparent payouts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tokenomics Section -->
+    <section id="tokenomics" class="py-5 tokenomics-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">HLT Tokenomics</h2>
+                <p class="lead text-muted">Understanding the Healthra Token Economy</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h4 class="card-title"><i class="fas fa-chart-pie me-2"></i>Token Distribution</h4>
+                            <div class="chart-container">
+                                <canvas id="distributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h4 class="card-title"><i class="fas fa-users me-2"></i>Top Token Holders</h4>
+                            <div class="table-responsive">
+                                <table class="table" id="holdersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Address</th>
+                                            <th>Balance</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title"><i class="fas fa-chart-line me-2"></i>Token Metrics</h4>
+                            <div class="chart-container">
+                                <canvas id="metricsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h2 class="fw-bold mb-4">About Healthra</h2>
+                    <p class="lead">Healthra is transforming healthcare through decentralized technology.</p>
+                    <p>By leveraging Hedera Hashgraph's fast, secure, and fair blockchain technology, Healthra provides accessible healthcare services to everyone while ensuring data privacy and security.</p>
+                    <p>The HLT token powers the entire Healthra ecosystem, enabling transactions, rewarding participants, and governing the platform's future development.</p>
+                    <a href="/wallet/" class="btn btn-primary mt-3">Join Healthra Now</a>
+                </div>
+                <div class="col-lg-6">
+                    <img src="https://via.placeholder.com/600x400" alt="Healthra Platform" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-heartbeat me-2"></i>Healthra</h5>
+                    <p class="text-muted">Decentralized healthcare powered by Hedera Hashgraph.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#features" class="text-muted">Features</a></li>
+                        <li><a href="#tokenomics" class="text-muted">Tokenomics</a></li>
+                        <li><a href="#about" class="text-muted">About</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Connect</h5>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-muted"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-telegram fa-lg"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-discord fa-lg"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-github fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="text-center text-muted">
+                <small>© 2023 Healthra. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Token Data Fetching and Display
+        async function fetchTokenData() {
+            try {
+                // Fetch token info
+                const tokenInfoResponse = await fetch('wallet/api/token-info/');
+                const tokenInfo = await tokenInfoResponse.json();
+                
+                // Fetch account balance (assuming this is platform treasury)
+                const balanceResponse = await fetch('wallet/api/account-balance/');
+                const balanceData = await balanceResponse.json();
+                
+                // Fetch token holders
+                const holdersResponse = await fetch('wallet/api/token-holders/');
+                const holdersData = await holdersResponse.json();
+                
+                // Update DOM elements
+                updateTokenMetrics(tokenInfo, balanceData);
+                updateDistributionChart(tokenInfo);
+                updateHoldersTable(holdersData);
+                updatePriceChart();
+                
+            } catch (error) {
+                console.error('Error fetching token data:', error);
+            }
+        }
+        
+        function updateTokenMetrics(tokenInfo, balanceData) {
+            // Example price calculation (replace with real data)
+            const price = 0.15; // This should come from your API or price oracle
+            const circulatingSupply = tokenInfo.total_supply - balanceData.balance;
+            
+            // Animate numbers
+            new CountUp('tokenPrice', price, {
+                decimalPlaces: 4,
+                prefix: '$'
+            }).start();
+            
+            new CountUp('marketCap', price * tokenInfo.total_supply, {
+                decimalPlaces: 0,
+                prefix: '$',
+                suffix: ' USD'
+            }).start();
+            
+            new CountUp('circulatingSupply', circulatingSupply, {
+                decimalPlaces: 0,
+                suffix: ' HLT'
+            }).start();
+            
+            document.getElementById('totalSupply').textContent = 
+                tokenInfo.total_supply.toLocaleString() + ' HLT';
+        }
+        
+        function updateDistributionChart(tokenInfo) {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Circulating Supply', 'Platform Reserve', 'Team', 'Ecosystem Fund'],
+                    datasets: [{
+                        data: [60, 20, 10, 10], // Example distribution
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#36b9cc',
+                            '#f6c23e'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateHoldersTable(holdersData) {
+            const tbody = document.querySelector('#holdersTable tbody');
+            tbody.innerHTML = '';
+            
+            holdersData.holders.slice(0, 5).forEach((holder, index) => {
+                const percentage = (holder.balance / holdersData.total_circulating * 100).toFixed(2);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="text-truncate" style="max-width: 120px">${holder.account}</td>
+                    <td>${holder.balance.toLocaleString()} HLT</td>
+                    <td>${percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function updatePriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            // Example price history (replace with real data from your API)
+            const labels = [];
+            const prices = [];
+            const now = new Date();
+            
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString());
+                
+                // Simulate price movement
+                const basePrice = 0.15;
+                const fluctuation = Math.random() * 0.03 - 0.015;
+                prices.push(basePrice + fluctuation);
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'HLT Price (USD)',
+                        data: prices,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(4);
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 6
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateMetricsChart() {
+            const ctx = document.getElementById('metricsChart').getContext('2d');
+            
+            // Example metrics (replace with real data)
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total Supply', 'Circulating', 'Burned', 'Staked'],
+                    datasets: [{
+                        label: 'HLT Tokens',
+                        data: [100000000, 60000000, 5000000, 25000000],
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#5a5c69',
+                            '#f6c23e'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw.toLocaleString() + ' HLT';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000000) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize all charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTokenData();
+            updateMetricsChart();
+            
+            // Refresh data every 60 seconds
+            setInterval(fetchTokenData, 60000);
+        });
+    </script>
+</body>
+</html>

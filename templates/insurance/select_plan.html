@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Insurance Plan{% endblock %}
+
+{% block page_title %}Select Insurance Plan{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Available Plans</h5>
+            </div>
+            <div class="card-body">
+                {% if user_has_active_insurance %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> You already have active insurance coverage.
+                    Purchasing a new plan will replace your current coverage.
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    {% for plan in plans %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-{% if plan.plan_type == 'BASIC' %}primary{% elif plan.plan_type == 'STANDARD' %}success{% else %}warning{% endif %} text-white">
+                                <h5 class="mb-0">{{ plan.get_plan_type_display }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="card-title pricing-card-title">
+                                    {{ plan.monthly_cost_hbar }} HBAR<small class="text-muted fw-light">/month</small>
+                                </h3>
+                                <p>{{ plan.description }}</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    {% for key, value in plan.coverage_details.items %}
+                                    <li><i class="fas fa-check text-success me-2"></i> {{ key|title }}: {{ value }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{% url 'enroll-plan' plan.id %}" class="btn btn-lg btn-block btn-outline-primary">
+                                    Select Plan
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,8 +6,103 @@ from datetime import timedelta
 from .models import InsurancePlan, UserInsurance, InsurancePayment
 from wallet.models import UserWallet
 from decimal import Decimal
-import json
+from account.models import Profile, Transaction
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+#from weasyprint import HTML
+from wallet.contracts import token
 
+def home(request):
+    return render(request, 'index.html')
+
+def buy_hlt(request):
+    if request.method == 'POST':
+        amount = int(request.POST.get('amount'))
+        # Implement your HLT purchase logic here
+        # This would involve:
+        # 1. Calculating cost in fiat or HBAR
+        # 2. Processing payment
+        # 3. Minting/sending HLT tokens
+        # 4. Recording transaction
+        hlt_price_in_usd = 0.1
+        
+        Transaction.objects.create(
+            user=request.user,
+            transaction_type='HLT_PURCHASE',
+            currency='USD',
+            amount=amount * hlt_price_in_usd,
+            status='COMPLETED'
+        )
+        
+        messages.success(request, f'Successfully purchased {amount} HLT tokens!')
+        return redirect('insurance-dashboard')
+
+def fiat_deposit(request):
+    if request.method == 'POST':
+        amount = float(request.POST.get('amount'))
+        method = request.POST.get('method')
+        
+        # Process fiat deposit (would integrate with payment processor)
+        # Convert to HBAR based on current rate
+        
+        Transaction.objects.create(
+            user=request.user,
+            transaction_type='FIAT_DEPOSIT',
+            currency='USD',
+            amount=amount,
+            status='COMPLETED'
+        )
+        
+        messages.success(request, f'Successfully deposited ${amount:.2f}')
+        return redirect('insurance-dashboard')
+'''def generate_receipt(request, tx_id):
+    transaction = Transaction.objects.get(id=tx_id, user=request.user)
+    
+    # Generate PDF receipt
+    html_string = render_to_string('receipts/transaction_receipt.html', {
+        'transaction': transaction,
+        'user': request.user
+    })
+    
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=receipt_{tx_id}.pdf'
+    response.write(result)
+    
+    return response
+
+def generate_insurance_receipt(request, insurance_id):
+    insurance = UserInsurance.objects.get(id=insurance_id, user=request.user)
+    
+    if request.method == 'POST':
+        receipt_type = request.POST.get('receipt_type')
+        notes = request.POST.get('notes', '')
+        
+        if receipt_type == 'pdf':
+            html_string = render_to_string('receipts/insurance_receipt.html', {
+                'insurance': insurance,
+                'user': request.user,
+                'notes': notes
+            })
+            
+            html = HTML(string=html_string)
+            result = html.write_pdf()
+            
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename=insurance_receipt_{insurance_id}.pdf'
+            response.write(result)
+            return response
+            
+        elif receipt_type == 'email':
+            # Implement email sending logic
+            pass
+            
+        return redirect('insurance-dashboard')
+   '
+   ''' 
 @login_required
 def select_plan(request):
     plans = InsurancePlan.objects.filter(is_active=True)

@@ -22,6 +22,8 @@ from django.views.decorators.http import require_GET
 import json
 import os
 from django.conf import settings
+from wallet.models import UserWallet
+from wallet.contracts import token
 
 def id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -49,14 +51,13 @@ def register(request):
             except Exception as e:
                 try:
                     try:
-                        Profile.objects.get(phone_no=phone_no)
-                        messages.warning(request, "Your Details (phone number/ID/Email) has been registered on our platform earlier, we DO NOT allow multiple accounts on individuals! Please Login.")
-                        return redirect('login')
-                    except Profile.DoesNotExist:
+                        #token.main()
                         pass
+                    except Exception as e:
+                        messages.warning(request, f'Wallet Creation Faile: |{e}')
                     nu = User.objects.create_user(first_name=first_name, last_name=last_name, email=email, password=password, username=email)
-                    referrer = Profile.objects.get(phone_no="0706889399")
-                    Profile.objects.create(user=nu, phone_no=phone_no, gender=gender, referrer=referrer.user)
+                    Profile.objects.create(user=nu, phone_no=phone_no, gender=gender)
+                    UserWallet.objects.create(user=nu, )
                     messages.success(request, "Account has been created successfully, please login to continue")
                     return redirect('login')
                 except Exception as e:
@@ -68,50 +69,7 @@ def register(request):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
         return render(request, 'accounts/register.html')
-    
-def registration_affiliate(request, acode):
-    user = request.user
-    if user.is_authenticated:
-        return redirect('dashboard')
-    if request.method == "POST":
-        phone_no = request.POST.get('phoneNo')
-        email = request.POST.get('email').lower()
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        gender = request.POST.get('gender')
-        password = request.POST.get('password')
-        password1 = request.POST['password1']
-        if password != password1:
-            messages.warning(request, "Password does not match, try Again!")
-            return redirect('register')
-        if email and first_name and last_name and password is not None:
-            try:
-                User.objects.get(email=email)
-                messages.warning(request, "User with that details exist, please login or sign up with unique credentials")
-                return redirect("register")
-            except Exception as e:
-                try:
-                    affiliate = Profile.objects.get(code=acode)
-                    try:
-                        Profile.objects.get(phone_no=phone_no)
-                        messages.warning(request, "Your Details (phone number/ID/Email) has been registered on our platform earlier, we DO NOT allow multiple accounts on individuals! PLease Login.")
-                        return redirect('login')
-                    except Profile.DoesNotExist:
-                        pass
-                    nu = User.objects.create_user(first_name=first_name, last_name=last_name, email=email, password=password, username=email)
-                    Profile.objects.create(user=nu, phone_no=phone_no, referrer=affiliate.user, gender=gender)
-                    messages.success(request, "Account has been created successfully, please login to continue")
-                    return redirect('login')
-                except Exception as e:
-                    print(e)
-                    messages.warning(request, f"An error occured while trying to create your account, please try again")
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        else:
-            messages.warning(request, "All fields are required")
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    else:
-        return render(request, 'accounts/register_affiliate.html')
-
+   
 def login_form(request):
     user = request.user
     if user.is_authenticated:
@@ -133,12 +91,8 @@ def login_form(request):
                     #if verify.status == True:
                     login(request, user)
                     current_user =request.user
-                    if club.members.filter(id=current_user.id).exists():
-                        messages.success(request, f"Welcome back, { current_user.first_name }! You are an amazing member, explore what you have achieved at quepter youth hub.")
-                        return redirect('dashboard')
-                    else:
-                        messages.success(request, f"Congratulations {current_user.first_name}, You are one step away to complete your Quepter Youth Hub membership process. Join our Business and Entrepreneurship Club today!")
-                        return redirect('club_detail', uuid=club.uuid)
+                    messages.success(request, f"Welcome back, { current_user.first_name }! You are an amazing member, explore our plans and make a change today.")
+                    return redirect('insurance-dashboard')
                 except Verify.DoesNotExist:
                     messages.warning(request, "An error occured while trying to verify your account, please try again")
                     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -150,13 +104,3 @@ def login_form(request):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
     return render(request, 'accounts/login.html')
-
-
-def webmanifest(request):
-    manifest_path = os.path.join(settings.STATIC_ROOT, 'manifest.json')
-    with open(manifest_path) as f:
-        manifest = json.load(f)
-    return HttpResponse(
-        json.dumps(manifest),
-        content_type='application/manifest+json'
-    )

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.urls import path
-from .views import register, login_form, registration_affiliate, webmanifest
+from .views import register, login_form
 from django.contrib.auth import views as auth_views
 from .forms import PasswordChangeForm, PasswordResetForm, password_validation, SetPasswordForm
 from django.conf import settings
@@ -12,9 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('insurance.urls')),
     path('wallet/', include('wallet.urls')),
-    path('account/', include('account.urls')),
     path('accounts/register/', register, name='register'),
-    path('accounts/register/<str:acode>/', registration_affiliate, name='registration_link'),
     path('accounts/login/', login_form, name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='login'), name="logout"),
     path('accounts/password-reset/', auth_views.PasswordResetView.as_view(template_name='accounts/password_reset.html', form_class=PasswordResetForm, success_url='/accounts/password-reset/done/'), name="password-reset"), # Passing Success URL to Override default URL, also created password_reset_email.html due to error from our app_name in URL

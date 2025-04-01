@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthra - Login</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --secondary: #1cc88a;
+            --dark: #5a5c69;
+            --light: #f8f9fc;
+        }
+        
+        body {
+            background-color: var(--light);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            overflow: hidden;
+        }
+        
+        .login-card .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #224abe 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .login-card .card-body {
+            padding: 2rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .input-group-text {
+            background-color: transparent;
+            border-left: none;
+        }
+        
+        .input-group:focus-within .input-group-text {
+            border-color: var(--primary);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .divider-text {
+            padding: 0 1rem;
+            color: var(--dark);
+        }
+        
+        .social-login .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .social-login .btn i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-google {
+            background-color: #dd4b39;
+            color: white;
+        }
+        
+        .btn-facebook {
+            background-color: #3b5998;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-6 col-lg-8 col-md-10">
+                <div class="card login-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-heartbeat me-2"></i>Healthra</h2>
+                        <p class="mb-0">Welcome back! Please login to your account.</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            {% include 'partials/_messages.html' %}
+                            {% if form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Login failed!</strong> Invalid email or password.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input
+                                    type="email"
+                                    class="form-control"
+                                    id="email"
+                                    name="email"
+                                    placeholder="Enter your email"
+                                    autocomplete="username"
+                                    required
+                                    aria-describedby="emailHelp"
+                                    autofocus
+                                />
+                                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                            </div>
+
+                            <div class="mb-3 form-password-toggle">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label" for="password">Password</label>
+                                    <a href="" class="text-decoration-none">
+                                        <small class="text-primary">Forgot Password?</small>
+                                    </a>
+                                </div>
+                                <div class="input-group input-group-merge">
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        class="form-control"
+                                        name="password"
+                                        placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                                        aria-describedby="passwordHelp"
+                                        autocomplete="current-password"
+                                        required
+                                        minlength="8"
+                                    />
+                                    <button 
+                                        type="button"
+                                        class="input-group-text bg-transparent border-start-0 cursor-pointer"
+                                        id="togglePassword"
+                                        aria-label="Show password"
+                                    >
+                                        <i class="fas fa-eye-slash"></i>
+                                    </button>
+                                </div>
+                                <div id="passwordHelp" class="form-text">Minimum 8 characters required</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        id="remember-me"
+                                        name="remember_me"
+                                    />
+                                    <label class="form-check-label" for="remember-me">
+                                        Keep me logged in for 30 days
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" id="loginButton">
+                                    <i class="fas fa-sign-in-alt me-2"></i> Login
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="divider">
+                            <span class="divider-text">OR</span>
+                        </div>
+
+                        <div class="social-login mb-4">
+                            <div class="d-grid gap-2">
+                                <a href="#" class="btn btn-google btn-lg">
+                                    <i class="fab fa-google me-2"></i> Sign in with Google
+                                </a>
+                                <a href="#" class="btn btn-facebook btn-lg mt-2">
+                                    <i class="fab fa-facebook-f me-2"></i> Sign in with Facebook
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="mb-0">Don't have an account? 
+                                <a href="{% url 'register' %}" class="text-decoration-none">Sign up</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            icon.classList.toggle('fa-eye-slash');
+            icon.classList.toggle('fa-eye');
+            this.setAttribute('aria-label', type === 'password' ? 'Show password' : 'Hide password');
+        });
+
+        // Form submission handler
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const loginButton = document.getElementById('loginButton');
+            loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Logging in...';
+            loginButton.disabled = true;
+        });
+
+        // Auto-focus on email field when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').focus();
+        });
+    </script>
+</body>
+</html>
