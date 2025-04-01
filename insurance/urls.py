@@ -1,7 +1,13 @@
 from django.urls import path
-from .views import HealthPlanListCreateView, ClaimListCreateView
+from . import views
+
+
+app_name = 'insurance'
 
 urlpatterns = [
-    path('plans/', HealthPlanListCreateView.as_view(), name='health-plans'),
-    path('claims/', ClaimListCreateView.as_view(), name='claims'),
+    path('plans/', views.select_plan, name='select-plan'),
+    path('plans/enroll/<int:plan_id>/', views.enroll_plan, name='enroll-plan'),
+    path('payment/<int:insurance_id>/', views.process_payment, name='process-insurance-payment'),
+    path('dashboard/', views.insurance_dashboard, name='insurance-dashboard'),
+    
 ]
