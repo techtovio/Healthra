@@ -1,72 +1,3 @@
-o🌍 Healthra – Decentralized Global Health Insurance Powered by Hedera Hashgraph
-
-🚀 Revolutionizing Healthcare Accessibility & Transparency
-
-
----
-
-🏆 Why Healthra?
-
-Healthra is the future of global health insurance – a fully decentralized, transparent, and inclusive platform using Hedera Hashgraph to make healthcare affordable and accessible for everyone, everywhere.
-
-🔹 No Middlemen – Direct access to healthcare services without bureaucracy.
-🔹 Fast & Scalable – Powered by Hedera Hashgraph, ensuring near-instant transactions.
-🔹 Secure & Transparent – Immutable records prevent fraud and ensure fair insurance payouts.
-🔹 Multi-Currency Support – Use Healthra Token (HLT) or Fiat, making it accessible for all.
-🔹 Smart Claims Processing – AI-driven claim verification for real-time settlements.
-
-
----
-
-🔥 Core Technologies
-
-🚀 Backend: Django (Python) – Robust, scalable, and secure framework.
-🌐 Blockchain: Hedera Hashgraph – Lightning-fast, fair, and low-cost transactions.
-💻 Frontend: HTML, CSS, JavaScript, Bootstrap – Sleek, user-friendly, and responsive.
-📊 Smart Contracts: Solidity & Hedera SDK – Decentralized policy management & claims.
-🔍 Database: PostgreSQL – Reliable and optimized for scale.
-
-
----
-
-💡 How It Works?
-
-1️⃣ Users Join Healthra – Sign up and choose between HLT or Fiat for premium payments.
-2️⃣ Decentralized Health Fund – Users’ contributions strengthen both HLT and Fiat pools.
-3️⃣ AI-Powered Claims Processing – Verified via smart contracts, ensuring zero fraud.
-4️⃣ Global Provider Network – Hospitals accept HLT & Fiat, benefiting from lower fees.
-5️⃣ Rewards & Staking – Users stake HLT for discounted premiums & additional benefits.
-
-
----
-
-🔗 Tokenomics: Strengthening HLT & Fiat Together
-
-🔸 HLT as the Base Currency – Fiat transactions strengthen the HLT ecosystem.
-🔹 Dual Liquidity Pool (Fiat & HLT) – Ensures stability & accessibility.
-🔸 Automated Market Balancing (AMM) – Keeps token prices stable & fair.
-🔹 Staking Benefits – Users & hospitals earn discounts & lower fees by holding HLT.
-
----
-
-🎯 Next Steps & Roadmap
-
-🔹 Integration with Hospitals & Providers – Expanding network adoption.
-🔹 Regulatory Compliance – Ensuring legal alignment for fiat & crypto transactions.
-🔹 Scaling Infrastructure – Expanding storage & performance for millions of users.
-
-
----
-
-🚀 Join the Future of Health Insurance
-
-👥 Team Healthra is on a mission to democratize healthcare for all.
-💡 Be part of the revolution!
-📩 Contact us: kembohititoh@gmail.com
-📌 GitHub Repo: Healthra
-
-
-
 # **Healthra - Decentralized Healthcare Insurance Platform**  
 **Powered by Hedera Hashgraph & AI**  
 
@@ -120,6 +51,34 @@ Healthra is the future of global health insurance – a fully decentralized, tra
 
 ---
 
+## **🔒 Security Audit Status**  
+🟡 **Audit Pending** (Scheduled for Q3 2024)  
+Planned with **CertiK** and **Halborn**  
+- Smart Contract Review  
+- Penetration Testing  
+- HIPAA Compliance Check  
+
+---
+
+## **💰 HLT Tokenomics**  
+**Total Supply:** 100,000,000 HLT (Fixed)  
+
+| Allocation         | Tokens    | %    | Vesting Schedule       |
+|--------------------|-----------|------|------------------------|
+| Patient Rewards    | 35,000,000| 35%  | Unlocked               |
+| Staking            | 25,000,000| 25%  | 3-Year Linear Release  |
+| Core Team          | 15,000,000| 15%  | 4-Year Cliff           |
+| Ecosystem Growth   | 12,000,000| 12%  | 2-Year Linear          |
+| Liquidity Pools    | 8,000,000 | 8%   | Unlocked               |
+| Community          | 5,000,000 | 5%   | 6-Month Linear         |
+
+**Economic Model:**  
+- **Deflationary:** 0.5% transaction fee burn  
+- **Staking Rewards:** 7-10% APY  
+- **Governance:** HLT holders vote on upgrades  
+
+---  
+
 ## **🤖 AI Integration Roadmap**  
 
 ### **2024 Q3: AI-Assisted Claims Review**  
@@ -153,16 +112,19 @@ Provider & Patient Notifications
 
 ## **🚀 Getting Started**  
 ### **Prerequisites**  
-- Node.js v18+  
+- python 3+
+- django
+hiero python sdk
 - Hedera Testnet Account  
 - Docker (for AI microservices)  
 
 ### **Installation**  
 ```bash
-git clone https://github.com/healthra/core.git
+git clone https://github.com/techtovio/healthra/core.git
 cd healthra-core
-npm install
-hedera-cli setup
+python3 manage.py makemigrations
+.. migrate
+.. runserver
 ```
 
 ### **Run Locally**  
@@ -202,14 +164,6 @@ npm run ai-engine  # Launches fraud detection model
 - **Launch HLT governance (2025)**  
 - **Expand to global insurance markets**  
 
-**Want to contribute?** Check out our [GitHub](https://github.com/healthra) or join the [Discord](https://discord.gg/healthra)! 🚀  
+**Want to contribute?** Check out our [GitHub](https://github.com/techtovio/healthra) or join the [Discord](https://discord.gg/healthra)! 🚀  
 
---- 
-
-This `README.md` provides:  
-✅ **Clear problem-solution breakdown**  
-✅ **Tech stack & AI roadmap**  
-✅ **Easy setup instructions**  
-✅ **Community engagement links**  
-
-Would you like me to add a **security audit section** or **tokenomics deep dive**? 🚀
+---
