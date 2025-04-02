@@ -11,51 +11,28 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 #from weasyprint import HTML
-from wallet.contracts import token
-
+from wallet.views import transfer_tokens
+from hiero_sdk_python import (
+    Client,
+    AccountId,
+    PrivateKey,
+    TransferTransaction,
+    Network,
+    TokenAssociateTransaction,
+    TokenId,
+    TopicId,
+    TopicCreateTransaction,
+    TopicMessageSubmitTransaction,
+)
+from wallet.contracts import mirror_node
+from django.http import HttpResponseRedirect
+import os
+from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
 def home(request):
     return render(request, 'index.html')
 
-def buy_hlt(request):
-    if request.method == 'POST':
-        amount = int(request.POST.get('amount'))
-        # Implement your HLT purchase logic here
-        # This would involve:
-        # 1. Calculating cost in fiat or HBAR
-        # 2. Processing payment
-        # 3. Minting/sending HLT tokens
-        # 4. Recording transaction
-        hlt_price_in_usd = 0.1
-        
-        Transaction.objects.create(
-            user=request.user,
-            transaction_type='HLT_PURCHASE',
-            currency='USD',
-            amount=amount * hlt_price_in_usd,
-            status='COMPLETED'
-        )
-        
-        messages.success(request, f'Successfully purchased {amount} HLT tokens!')
-        return redirect('insurance-dashboard')
-
-def fiat_deposit(request):
-    if request.method == 'POST':
-        amount = float(request.POST.get('amount'))
-        method = request.POST.get('method')
-        
-        # Process fiat deposit (would integrate with payment processor)
-        # Convert to HBAR based on current rate
-        
-        Transaction.objects.create(
-            user=request.user,
-            transaction_type='FIAT_DEPOSIT',
-            currency='USD',
-            amount=amount,
-            status='COMPLETED'
-        )
-        
-        messages.success(request, f'Successfully deposited ${amount:.2f}')
-        return redirect('insurance-dashboard')
 '''def generate_receipt(request, tx_id):
     transaction = Transaction.objects.get(id=tx_id, user=request.user)
     
@@ -103,6 +80,60 @@ def generate_insurance_receipt(request, insurance_id):
         return redirect('insurance-dashboard')
    '
    ''' 
+
+def create_topic():
+    network = Network(network='testnet')
+    client = Client(network)
+
+    operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
+    operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
+
+    client.set_operator(operator_id, operator_key)
+
+    transaction = (
+        TopicCreateTransaction(
+            memo="Healthra Insurance",
+            admin_key=operator_key.public_key()
+        )
+        .freeze_with(client)
+        .sign(operator_key)
+    )
+
+    try:
+        receipt = transaction.execute(client)
+        if receipt and receipt.topicId:
+            print(f"Topic created with ID: {receipt.topicId}")
+            return receipt.topicId
+        else:
+            print("Topic creation failed: Topic ID not returned in receipt.")
+    except Exception as e:
+        print(f"Topic creation failed: {str(e)}")
+
+def submit_message(message):
+    network = Network(network='testnet')
+    client = Client(network)
+
+    operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
+    operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
+    topic_id = TopicId.from_string(os.getenv('TOPIC_ID'))
+
+    client.set_operator(operator_id, operator_key)
+
+    transaction = (
+        TopicMessageSubmitTransaction(topic_id=topic_id, message=message)
+        .freeze_with(client)
+        .sign(operator_key)
+    )
+
+    try:
+        receipt = transaction.execute(client)
+        print(f"Message submitted to topic {topic_id}: {message}")
+        return True
+    except Exception as e:
+        print(f"Message submission failed: {str(e)}")
+        return False
+
+
 @login_required
 def select_plan(request):
     plans = InsurancePlan.objects.filter(is_active=True)
@@ -153,35 +184,53 @@ def enroll_plan(request, plan_id):
 def process_payment(request, insurance_id):
     insurance = get_object_or_404(UserInsurance, id=insurance_id, user=request.user)
     
-    # In a real implementation, this would interact with Hedera
-    # For now, we'll simulate successful payment
     today = timezone.now().date()
     
     if insurance.payment_frequency == 'ANNUAL':
         coverage_end = today + timedelta(days=365)
     else:
         coverage_end = today + timedelta(days=30)
+    operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
+    operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
+    recipient_id = AccountId.from_string(request.user.wallet.recipient_id)
+    token_id = AccountId.from_string(os.getenv('Token_ID'))
+    # Transfer HLT and Submit HCL-10
+    balance = mirror_node.get_token_balance_for_account(account_id=recipient_id, token_id=token_id)
+    if balance >= insurance.hbar_cost:
+        transfer = transfer_tokens(operator_id_sender=operator_id, operator_key_sender=operator_key, recipient_id=recipient_id, amount=insurance.hbar_cost)
+        if transfer == True:
+            message = {
+                "type": "insurance_payment",
+                "insurance_id": str(insurance_id),
+                "amount": str(insurance.hbar_cost),
+                "timestamp": datetime.now().isoformat()
+            }
+            submit_message(message=message)
+            # Update insurance status
+            insurance.status = 'ACTIVE'
+            insurance.start_date = today
+            insurance.end_date = coverage_end
+            insurance.next_payment_date = coverage_end
+            insurance.save()
     
-    # Update insurance status
-    insurance.status = 'ACTIVE'
-    insurance.start_date = today
-    insurance.end_date = coverage_end
-    insurance.next_payment_date = coverage_end
-    insurance.save()
+            # Record payment (in reality, this would come from Hedera transaction)
+            InsurancePayment.objects.create(
+                insurance=insurance,
+                transaction_id=f"SIMULATED_{timezone.now().timestamp()}",
+                amount_hbar=insurance.hbar_cost,
+                coverage_period_start=today,
+                coverage_period_end=coverage_end,
+                is_successful=True
+            )
     
-    # Record payment (in reality, this would come from Hedera transaction)
-    InsurancePayment.objects.create(
-        insurance=insurance,
-        transaction_id=f"SIMULATED_{timezone.now().timestamp()}",
-        amount_hbar=insurance.hbar_cost,
-        coverage_period_start=today,
-        coverage_period_end=coverage_end,
-        is_successful=True
-    )
-    
-    messages.success(request, "Insurance payment processed successfully!")
-    return redirect('insurance-dashboard')
-
+            messages.success(request, "Insurance payment processed successfully!")
+            return redirect('insurance-dashboard')
+        else:
+            messages.warning(request, 'We are unable to process your request now, please try again later!')
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    else:
+        messages.warning(request, f"You don't have sufficient HLT to select this plan, your HLT Balance is {balance}, buy HLT and try again")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 @login_required
 def insurance_dashboard(request):
     active_insurance = UserInsurance.objects.filter(

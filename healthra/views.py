@@ -24,10 +24,44 @@ import os
 from django.conf import settings
 from wallet.models import UserWallet
 from wallet.contracts import token
-
+from wallet.views import associate_token
+from wallet.contracts.hedera import load_operator_credentials, create_new_account
+from hiero_sdk_python import (
+    Client,
+    AccountId,
+    PrivateKey,
+    TransferTransaction,
+    Network,
+    TokenAssociateTransaction,
+    TokenId
+)
 def id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
+def assign_user_wallet(name):
+    operator_id, operator_key = load_operator_credentials()
+    network_type = os.getenv('NETWORK')
+    token_id = os.getenv('Token_ID')
+    network = Network(network=network_type)
+    client = Client(network)
+    client.set_operator(operator_id, operator_key)
+    try:
+        recipient_id, recipient_private_key, new_account_public_key = create_new_account(name, client)
+        associate_token(recipient_id, recipient_private_key)
+
+        return {
+            'status':'success',
+            'new_account_public_key': f'{new_account_public_key}',
+            'recipient_private_key': f'{recipient_private_key}',
+            'recipient_id':f'{recipient_id}'
+        }
+    except Exception as e:
+        print(e)
+        return {
+            'status':'failed',
+            'error':e
+        }
+    
 def register(request):
     user = request.user
     if user.is_authenticated:
@@ -39,6 +73,7 @@ def register(request):
         last_name = request.POST.get('last_name')
         gender = request.POST.get('gender')
         password = request.POST.get('password')
+        country_code = request.POST.get('country_code')
         password1 = request.POST['password1']
         if password != password1:
             messages.warning(request, "Password does not match, try Again!")
@@ -51,13 +86,21 @@ def register(request):
             except Exception as e:
                 try:
                     try:
-                        #token.main()
-                        pass
+                        response = assign_user_wallet(name=f'{first_name} {last_name}')
+                        print(response)
+                        if response['status'] == 'success':
+                            new_account_public_key = response['new_account_public_key']
+                            recipient_private_key = response['recipient_private_key']
+                            recipient_id = response['recipient_id']
+                        else:
+                            messages.warning(request, "An error occured while trying to assign you a wallet, please try again")
+                            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
                     except Exception as e:
                         messages.warning(request, f'Wallet Creation Faile: |{e}')
+                        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
                     nu = User.objects.create_user(first_name=first_name, last_name=last_name, email=email, password=password, username=email)
-                    Profile.objects.create(user=nu, phone_no=phone_no, gender=gender)
-                    UserWallet.objects.create(user=nu, )
+                    Profile.objects.create(user=nu, country_code=country_code, phone_no=phone_no, gender=gender)
+                    UserWallet.objects.create(user=nu, qpt_public_key=new_account_public_key, qpt_private_key=recipient_private_key, recipient_id=recipient_id)
                     messages.success(request, "Account has been created successfully, please login to continue")
                     return redirect('login')
                 except Exception as e:

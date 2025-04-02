@@ -50,7 +50,7 @@ def wallet_balance(request):
     balance = mirror_node.get_token_balance_for_account(account_id=wallet.recipient_id, token_id=token_id)
     print(balance)
     data = {
-        'qpt_balance':balance
+        'hlt_balance':balance
     }
     return JsonResponse(data)
 
@@ -97,27 +97,6 @@ def associate_token(recipient_id_new, recipient_key_new):
         print("Token association successful.")
     except Exception as e:
         print(f"Token association failed: {str(e)}")
-
-def assign_user_wallets(request):
-    operator_id, operator_key = load_operator_credentials()
-    network_type = os.getenv('NETWORK')
-    token_id = os.getenv('Token_ID')
-    network = Network(network=network_type)
-    client = Client(network)
-    client.set_operator(operator_id, operator_key)
-    # Handle User Wallets
-    users = User.objects.all()
-    for user in users:
-        name = user.get_full_name()
-        try:
-            recipient_id, recipient_private_key, new_account_public_key = create_new_account(name, client)
-            #associate_token(client, recipient_id, recipient_private_key, [token_id])
-            associate_token(recipient_id, recipient_private_key)
-            UserWallet.objects.create(user=user, qpt_public_key=new_account_public_key, qpt_private_key=recipient_private_key, recipient_id=recipient_id)
-        except Exception as e:
-            print(e)
-    return render(request, 'contracts/assign_user_wallet.html')
-
 
 def transfer_tokens(operator_id_sender, operator_key_sender, recipient_id, amount):
     network_type = os.getenv('NETWORK')
@@ -200,32 +179,6 @@ def token_info(request):
             'timestamp': response.headers.get('Date', '')
         })
         
-    except requests.exceptions.RequestException as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=500)
-
-@require_GET
-def account_balance(request):
-    account_id = os.getenv('OPERATOR_ID')
-    token_id = os.getenv('Token_ID')
-    
-    try:
-        response = requests.get(f"{TESTNET_MIRROR_URL}/accounts/{account_id}/tokens")
-        response.raise_for_status()
-        tokens = response.json().get('tokens', [])
-        
-        balance = next(
-            (int(token['balance']) for token in tokens if token['token_id'] == token_id),
-            0
-        )
-        
-        return JsonResponse({
-            'account_id': account_id,
-            'balance': balance,
-            'status': 'success'
-        })
     except requests.exceptions.RequestException as e:
         return JsonResponse({
             'status': 'error',
