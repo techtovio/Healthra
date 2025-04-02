@@ -47,23 +47,10 @@ Healthra is the future of global health insurance – a fully decentralized, tra
 🔸 Automated Market Balancing (AMM) – Keeps token prices stable & fair.
 🔹 Staking Benefits – Users & hospitals earn discounts & lower fees by holding HLT.
 
-
----
-
-🔥 Why We’ll Win The Hedera Hashathon?
-
-✅ Real-World Impact – Solving a trillion-dollar problem in healthcare.
-✅ Scalability & Speed – Hedera enables 10,000+ TPS, making global adoption viable.
-✅ Trust & Transparency – Immutable records prevent corruption & fraud.
-✅ Accessibility for All – Bridging Fiat & Crypto to include non-tech-savvy users.
-✅ Seamless UX – Designed for intuitive, frictionless adoption worldwide.
-
-
 ---
 
 🎯 Next Steps & Roadmap
 
-🔹 Smart Contract Deployment – Finalizing staking & claim processing contracts.
 🔹 Integration with Hospitals & Providers – Expanding network adoption.
 🔹 Regulatory Compliance – Ensuring legal alignment for fiat & crypto transactions.
 🔹 Scaling Infrastructure – Expanding storage & performance for millions of users.
@@ -75,6 +62,5 @@ Healthra is the future of global health insurance – a fully decentralized, tra
 
 👥 Team Healthra is on a mission to democratize healthcare for all.
 💡 Be part of the revolution!
-📩 Contact us: kembohititoh@gmail.com 
-🌎 Website: https://quepter.co.ke 
+📩 Contact us: kembohititoh@gmail.com
 📌 GitHub Repo: Healthra
