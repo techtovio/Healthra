@@ -10,7 +10,6 @@ from account.models import Profile, Transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-#from weasyprint import HTML
 from wallet.views import transfer_tokens
 from hiero_sdk_python import (
     Client,
@@ -33,53 +32,6 @@ load_dotenv()
 def home(request):
     return render(request, 'index.html')
 
-'''def generate_receipt(request, tx_id):
-    transaction = Transaction.objects.get(id=tx_id, user=request.user)
-    
-    # Generate PDF receipt
-    html_string = render_to_string('receipts/transaction_receipt.html', {
-        'transaction': transaction,
-        'user': request.user
-    })
-    
-    html = HTML(string=html_string)
-    result = html.write_pdf()
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename=receipt_{tx_id}.pdf'
-    response.write(result)
-    
-    return response
-
-def generate_insurance_receipt(request, insurance_id):
-    insurance = UserInsurance.objects.get(id=insurance_id, user=request.user)
-    
-    if request.method == 'POST':
-        receipt_type = request.POST.get('receipt_type')
-        notes = request.POST.get('notes', '')
-        
-        if receipt_type == 'pdf':
-            html_string = render_to_string('receipts/insurance_receipt.html', {
-                'insurance': insurance,
-                'user': request.user,
-                'notes': notes
-            })
-            
-            html = HTML(string=html_string)
-            result = html.write_pdf()
-            
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename=insurance_receipt_{insurance_id}.pdf'
-            response.write(result)
-            return response
-            
-        elif receipt_type == 'email':
-            # Implement email sending logic
-            pass
-            
-        return redirect('insurance-dashboard')
-   '
-   ''' 
 
 def create_topic():
     network = Network(network='testnet')
@@ -192,12 +144,16 @@ def process_payment(request, insurance_id):
         coverage_end = today + timedelta(days=30)
     operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
     operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
-    recipient_id = AccountId.from_string(request.user.wallet.recipient_id)
-    token_id = AccountId.from_string(os.getenv('Token_ID'))
-    # Transfer HLT and Submit HCL-10
+    poolId=PrivateKey.from_string(os.getenv('HEALHRA_POOL_ID'))
+    token_id = os.getenv('Token_ID')
+    # Transfer HLT and Submit HCL-10 HEALHRA_POOL_ID
+    wallet = UserWallet.objects.get(user=request.user)
+    recipient_id = wallet.recipient_id
+    recipient_key = wallet.decrypt_key().split("hex=")[-1].strip(">")
+    print(recipient_key)
     balance = mirror_node.get_token_balance_for_account(account_id=recipient_id, token_id=token_id)
     if balance >= insurance.hbar_cost:
-        transfer = transfer_tokens(operator_id_sender=operator_id, operator_key_sender=operator_key, recipient_id=recipient_id, amount=insurance.hbar_cost)
+        transfer = transfer_tokens(operator_id_sender=AccountId.from_string(recipient_id), operator_key_sender=PrivateKey.from_string(recipient_key), recipient_id=poolId, amount=insurance.hbar_cost)
         if transfer == True:
             message = {
                 "type": "insurance_payment",

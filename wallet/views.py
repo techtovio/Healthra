@@ -98,6 +98,21 @@ def associate_token(recipient_id_new, recipient_key_new):
     except Exception as e:
         print(f"Token association failed: {str(e)}")
 
+def create_pool_wallets(request):
+    operator_id, operator_key = load_operator_credentials()
+
+    network_type = os.getenv('NETWORK')
+    token_id = os.getenv('Token_ID')
+    network = Network(network=network_type)
+    client = Client(network)
+    client.set_operator(operator_id, operator_key)
+    name = 'Healthra Pool'
+    recipient_id, recipient_private_key, new_account_public_key = create_new_account(name, client)
+    print(recipient_id)
+    print(recipient_private_key)
+    associate_token(recipient_id, recipient_private_key)
+    return JsonResponse({'status':'success'})
+
 def transfer_tokens(operator_id_sender, operator_key_sender, recipient_id, amount):
     network_type = os.getenv('NETWORK')
     network = Network(network=network_type)
@@ -136,18 +151,18 @@ def fund_claim(request):
 
 def buy_hlt(request):
     if request.method == 'POST':
-        amount = request.POST['amount']
+        amount = request.POST['fiat_amount']
         f_amount = float(amount)
         operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
         operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
         recipient_id = AccountId.from_string(request.user.wallet.recipient_id)
         print(float(request.user.profile.funds))
-        print(float(request.user.profile.funds) > float(f_amount*10))
-        if float(request.user.profile.funds) >= float(f_amount*10):
+        print(float(request.user.profile.funds) > float(f_amount*100))
+        if float(request.user.profile.funds) >= float(f_amount*100):
             buy = transfer_tokens(operator_id_sender=operator_id, operator_key_sender=operator_key, recipient_id=recipient_id, amount=int(amount))
             if buy == True:
                 profile = Profile.objects.get(user=request.user)
-                profile.funds -= Decimal(f_amount*10)
+                profile.funds -= Decimal(f_amount*100)
                 profile.save()
                 messages.success(request, f'HLT Purchase was successful, {amount} HLT has been transfered to your wallet')
             else:

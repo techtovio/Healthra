@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/token-info/', views.token_info, name='token_info'),
     path('api/account-balance/', views.wallet_balance, name='account_balance'),
     path('api/token-holders/', views.token_holders, name='token_holders'),
+    #path('create_pool', views.create_pool_wallets)
 ]

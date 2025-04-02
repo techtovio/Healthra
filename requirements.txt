@@ -1,0 +1,3 @@
+django
+hiero_sdk_python
+requests

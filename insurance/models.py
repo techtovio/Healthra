@@ -8,6 +8,8 @@ class InsurancePlan(models.Model):
         ('BASIC', 'Basic Coverage'),
         ('STANDARD', 'Standard Coverage'),
         ('PREMIUM', 'Premium Coverage'),
+        ('SENIOR', 'Senior Care Plan'),
+        ('STUDENT', 'Affordable coverage for students with basic needs')
     ]
     
     name = models.CharField(max_length=100)

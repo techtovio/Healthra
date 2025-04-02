@@ -14,7 +14,10 @@
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Add these libraries to your base template or before the modal -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         :root {
             --primary: #4e73df;
@@ -360,6 +363,156 @@
         </div>
     </div>
 
+    <!-- Buy HLT Modal -->
+<div class="modal fade" id="buyHltModal" tabindex="-1" aria-labelledby="buyHltModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="buyHltModalLabel">Buy HLT Tokens</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'buy_hlt' %}" id="hltPurchaseForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-4 text-center">
+                        <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                        <h5>Convert KES to HLT Tokens</h5>
+                        <p class="text-muted">1 KES = {{ kes_to_hlt_rate|floatformat:4 }} HLT</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fiatAmount" class="form-label">Amount in KES</label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">HLT</span>
+                            <input type="number" class="form-control" name="fiat_amount" id="fiatAmount" 
+                                   placeholder="1000.00" min="1" step="1" required>
+                        </div>
+                        <div class="form-text">Minimum purchase: HLT 1</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentMethod" class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method" id="paymentMethod" required>
+                            <option value="">Select payment method</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="card">Credit/Debit Card</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-light">
+                        <div class="d-flex justify-content-between">
+                            <span>You'll Pay:</span>
+                            <strong><span id="estimatedHlt">0.00</span> HLT</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Purchase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Receipt Modal (Updated Version) -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalLabel">Insurance Receipt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- This div will be converted to PDF -->
+                <div id="receiptContent" class="receipt-box">
+                    <div class="text-center mb-4">
+                        <h3>Healthra Insurance</h3>
+                        <p class="text-muted">Official Receipt</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Member Name:</strong> {{ user.get_full_name }}</p>
+                            <p><strong>Member ID:</strong> {{ user.id }}</p>
+                            <p><strong>Date Issued:</strong> <span id="receiptDate">{% now "M d, Y" %}</span></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <p><strong>Receipt #:</strong> {{ active_insurance.id|stringformat:"06d" }}</p>
+                            <p><strong>Plan Type:</strong> {{ active_insurance.plan.get_plan_type_display }}</p>
+                            <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ active_insurance.plan.get_plan_type_display }} Plan ({{ active_insurance.get_payment_frequency_display }})</td>
+                                    <td>{{ active_insurance.hbar_cost }} HLT</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Paid</strong></td>
+                                    <td><strong>{{ active_insurance.hbar_cost }} HLT</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Coverage Period:</strong></p>
+                            <p>{{ active_insurance.start_date|date:"M d, Y" }} to {{ active_insurance.end_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Next Payment Due:</strong></p>
+                            <p>{{ active_insurance.next_payment_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Add footer/watermark if needed -->
+                    <div class="text-center mt-4 text-muted">
+                        <small>Generated by Healthra Insurance on {% now "M d, Y" %}</small>
+                    </div>
+                </div>
+                
+                <!-- Options for the user -->
+                <div class="mt-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Delivery Method</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="receiptAction" id="downloadReceipt" value="download" checked>
+                            <label class="form-check-label" for="downloadReceipt">
+                                Download PDF
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input disabled class="form-check-input" type="radio" name="receiptAction" id="emailReceipt" value="email">
+                            <label class="form-check-label" for="emailReceipt">
+                                Email to {{ user.email }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="generateReceiptBtn" class="btn btn-primary">
+                    <span id="generateBtnText">Generate Receipt</span>
+                    <span id="generateSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -397,7 +550,101 @@
             });
         });
     </script>
-    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const { jsPDF } = window.jspdf;
+            const generateBtn = document.getElementById('generateReceiptBtn');
+            const generateSpinner = document.getElementById('generateSpinner');
+            const generateBtnText = document.getElementById('generateBtnText');
+            
+            if (generateBtn) {
+                generateBtn.addEventListener('click', async function() {
+                    const action = document.querySelector('input[name="receiptAction"]:checked').value;
+                    
+                    // Show loading state
+                    generateBtn.disabled = true;
+                    generateSpinner.classList.remove('d-none');
+                    generateBtnText.textContent = 'Generating...';
+                    
+                    try {
+                        // Create PDF from receipt content
+                        const element = document.getElementById('receiptContent');
+                        const canvas = await html2canvas(element, {
+                            scale: 2, // Higher quality
+                            logging: false,
+                            useCORS: true,
+                            allowTaint: true
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgWidth = 210; // A4 width in mm
+                        const pageHeight = 295; // A4 height in mm
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 0;
+                        
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        
+                        // Add new page if content is too long
+                        while (heightLeft >= 0) {
+                            position = heightLeft - imgHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                            heightLeft -= pageHeight;
+                        }
+                        
+                        if (action === 'download') {
+                            // Download the PDF
+                            pdf.save(`Healthra_Receipt_${new Date().toISOString().slice(0,10)}.pdf`);
+                        } else {
+                            // Email option would go here
+                            // You would need to send the PDF to your server for emailing
+                            alert('Email functionality would be implemented here');
+                        }
+                        
+                        // Close modal after generation
+                        bootstrap.Modal.getInstance(document.getElementById('receiptModal')).hide();
+                        
+                    } catch (error) {
+                        console.error('Error generating PDF:', error);
+                        alert('Failed to generate receipt. Please try again.');
+                    } finally {
+                        // Reset button state
+                        generateBtn.disabled = false;
+                        generateSpinner.classList.add('d-none');
+                        generateBtnText.textContent = 'Generate Receipt';
+                    }
+                });
+            }
+        });
+        </script>
+        
+        <style>
+        /* Add this to your CSS for better PDF generation */
+        #receiptContent {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receiptContent, #receiptContent * {
+                visibility: visible;
+            }
+            #receiptContent {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        </style>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

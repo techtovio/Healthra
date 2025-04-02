@@ -131,7 +131,7 @@
                                     <div>
                                         <h6 class="mb-0">Next Payment</h6>
                                         <p class="mb-0 text-muted">
-                                            {{ active_insurance.next_payment_date|date:"M d, Y" }} ({{ active_insurance.hbar_cost }} HBAR)
+                                            {{ active_insurance.next_payment_date|date:"M d, Y" }} ({{ active_insurance.hbar_cost }} HLT)
                                         </p>
                                     </div>
                                 </div>
@@ -305,7 +305,7 @@
                     <div class="empty-state">
                         <i class="fas fa-exchange-alt"></i>
                         <h5>No Recent Activity</h5>
-                        <p>Your transactions will appear here</p>
+                        <p>Your FIAT transactions will appear here</p>
                     </div>
                     {% endif %}
                 </div>
@@ -314,143 +314,7 @@
     </div>
 </div>
 
-<!-- Buy HLT Modal -->
-<div class="modal fade" id="buyHltModal" tabindex="-1" aria-labelledby="buyHltModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="buyHltModalLabel">Buy HLT Tokens</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" action="" id="hltPurchaseForm">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-4 text-center">
-                        <i class="fas fa-coins fa-3x text-warning mb-3"></i>
-                        <h5>Convert KES to HLT Tokens</h5>
-                        <p class="text-muted">1 KES = {{ kes_to_hlt_rate|floatformat:4 }} HLT</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="fiatAmount" class="form-label">Amount in KES</label>
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">KES</span>
-                            <input type="number" class="form-control" name="fiat_amount" id="fiatAmount" 
-                                   placeholder="1000.00" min="100" step="1" required>
-                        </div>
-                        <div class="form-text">Minimum purchase: KES 100</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="paymentMethod" class="form-label">Payment Method</label>
-                        <select class="form-select" name="payment_method" id="paymentMethod" required>
-                            <option value="">Select payment method</option>
-                            <option value="mpesa">M-Pesa</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="card">Credit/Debit Card</option>
-                        </select>
-                    </div>
-                    
-                    <div class="alert alert-light">
-                        <div class="d-flex justify-content-between">
-                            <span>You'll receive:</span>
-                            <strong><span id="estimatedHlt">0.00</span> HLT</strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Purchase</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
-<!-- Receipt Modal -->
-<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="receiptModalLabel">Insurance Receipt</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="receipt-box">
-                    <div class="text-center mb-4">
-                        <h3>Healthra Insurance</h3>
-                        <p class="text-muted">Official Receipt</p>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <p><strong>Member Name:</strong> {{ user.get_full_name }}</p>
-                            <p><strong>Member ID:</strong> {{ user.id }}</p>
-                            <p><strong>Date Issued:</strong> {% now "M d, Y" %}</p>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <p><strong>Receipt #:</strong> {{ active_insurance.id|stringformat:"06d" }}</p>
-                            <p><strong>Plan Type:</strong> {{ active_insurance.plan.get_plan_type_display }}</p>
-                            <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive mb-4">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{ active_insurance.plan.get_plan_type_display }} Plan ({{ active_insurance.get_payment_frequency_display }})</td>
-                                    <td>{{ active_insurance.hbar_cost }} HBAR</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Total Paid</strong></td>
-                                    <td><strong>{{ active_insurance.hbar_cost }} HBAR</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Coverage Period:</strong></p>
-                            <p>{{ active_insurance.start_date|date:"M d, Y" }} to {{ active_insurance.end_date|date:"M d, Y" }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Next Payment Due:</strong></p>
-                            <p>{{ active_insurance.next_payment_date|date:"M d, Y" }}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <form method="post" action="" id="receiptForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="insurance_id" value="{{ active_insurance.id }}">
-                    <div class="mb-3">
-                        <label for="receiptFormat" class="form-label">Receipt Format</label>
-                        <select class="form-select" name="receipt_format" id="receiptFormat" required>
-                            <option value="pdf">PDF Document</option>
-                            <option value="email">Email Receipt</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="receiptEmail" class="form-label">Email Address (if email selected)</label>
-                        <input type="email" class="form-control" name="email" id="receiptEmail" value="{{ user.email }}" placeholder="your@email.com">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" id="downloadReceiptBtn" class="btn btn-primary">Download Receipt</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -490,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // HLT Purchase Calculator
     const fiatAmountInput = document.getElementById('fiatAmount');
     const estimatedHltSpan = document.getElementById('estimatedHlt');
-    const kesToHltRate = {{ kes_to_hlt_rate|default:"0.01" }};
+    const kesToHltRate = {{ kes_to_hlt_rate|default:"100" }};
     
     if (fiatAmountInput && estimatedHltSpan) {
         fiatAmountInput.addEventListener('input', function() {
