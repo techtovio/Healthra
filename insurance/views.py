@@ -144,24 +144,23 @@ def process_payment(request, insurance_id):
         coverage_end = today + timedelta(days=30)
     operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
     operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))
-    poolId=PrivateKey.from_string(os.getenv('HEALHRA_POOL_ID'))
+    poolId=AccountId.from_string(os.getenv('HEALHRA_POOL_ID'))
     token_id = os.getenv('Token_ID')
     # Transfer HLT and Submit HCL-10 HEALHRA_POOL_ID
     wallet = UserWallet.objects.get(user=request.user)
     recipient_id = wallet.recipient_id
     recipient_key = wallet.decrypt_key().split("hex=")[-1].strip(">")
-    print(recipient_key)
     balance = mirror_node.get_token_balance_for_account(account_id=recipient_id, token_id=token_id)
     if balance >= insurance.hbar_cost:
-        transfer = transfer_tokens(operator_id_sender=AccountId.from_string(recipient_id), operator_key_sender=PrivateKey.from_string(recipient_key), recipient_id=poolId, amount=insurance.hbar_cost)
+        transfer = transfer_tokens(operator_id_sender=AccountId.from_string(recipient_id), operator_key_sender=PrivateKey.from_string(recipient_key), recipient_id=poolId, amount=int(insurance.hbar_cost))
         if transfer == True:
             message = {
                 "type": "insurance_payment",
-                "insurance_id": str(insurance_id),
-                "amount": str(insurance.hbar_cost),
+                "insurance_id": insurance_id,
+                "amount": insurance.hbar_cost,
                 "timestamp": datetime.now().isoformat()
             }
-            submit_message(message=message)
+            submit_message(message=str(message))
             # Update insurance status
             insurance.status = 'ACTIVE'
             insurance.start_date = today

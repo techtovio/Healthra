@@ -31,6 +31,12 @@ from decimal import Decimal
 from django.http import HttpResponseRedirect
 
 @login_required
+def wallet_history(request):
+    transactions = mirror_node.get_token_transactions(account_id=request.user.wallet.recipient_id, token_id=os.getenv('Token_ID'))
+    print(transactions)
+    return JsonResponse(transactions)
+
+@login_required
 def wallet_details(request):
     wallet = get_object_or_404(UserWallet, user=request.user)
     qpt_balance = mirror_node.get_token_balance_for_account(account_id=wallet.recipient_id, token_id=os.getenv('Token_ID'))
@@ -117,6 +123,7 @@ def transfer_tokens(operator_id_sender, operator_key_sender, recipient_id, amoun
     network_type = os.getenv('NETWORK')
     network = Network(network=network_type)
     client = Client(network)
+    print(amount)
 
     operator_id = AccountId.from_string(os.getenv('OPERATOR_ID'))
     operator_key = PrivateKey.from_string(os.getenv('OPERATOR_KEY'))

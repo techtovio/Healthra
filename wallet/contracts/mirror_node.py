@@ -43,7 +43,36 @@ def get_token_info(token_id):
     except requests.exceptions.RequestException as e:
         print(f"Error fetching token info: {e}")
         return None
-
+def get_token_transactions(token_id, account_id=None, limit=100):
+    """Get all transactions involving a specific token"""
+    url = f"{TESTNET_MIRROR_URL}/transactions/{account_id}"
+    params = {'limit': limit}
+    print(token_id)
+    print(account_id)
+    
+    if account_id:
+        params['account.id'] = account_id
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        transactions = []
+        
+        for tx in response.json().get('transactions', []):
+            transactions.append({
+                'transaction_id': tx['transaction_id'],
+                'type': tx.get('name', 'Unknown'),
+                'consensus_timestamp': tx['consensus_timestamp'],
+                'sender': tx.get('account', ''),
+                'amount': tx.get('amount', 0),
+                'status': tx.get('result', 'UNKNOWN')
+            })
+        
+        return transactions
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching transactions: {e}")
+        return None
+    
 def get_all_token_holders(token_id, limit=100):
     """Get all accounts holding the specified token"""
     url = f"{TESTNET_MIRROR_URL}/tokens/{token_id}/balances"
