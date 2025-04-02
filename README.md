@@ -124,24 +124,13 @@ git clone https://github.com/techtovio/healthra/core.git
 cd healthra-core
 python3 manage.py makemigrations
 .. migrate
-.. runserver
 ```
 
 ### **Run Locally**  
 ```bash
-npm run dev  # Starts frontend & backend
-npm run ai-engine  # Launches fraud detection model
+pip instal -r requirements.txt
+python3 manage.py runserver
 ```
-
----
-
-## **🌍 Join the Future of Healthcare**  
-- **Website**: [https://healthra.org](https://healthra.org)  
-- **GitHub**: [https://github.com/healthra](https://github.com/healthra)  
-- **Twitter**: [@HealthraOfficial](https://twitter.com/HealthraOfficial)  
-- **Discord**: [https://discord.gg/healthra](https://discord.gg/healthra)  
-
-📜 **License**: Apache 2.0  
 
 ---
 
