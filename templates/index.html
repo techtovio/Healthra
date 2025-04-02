@@ -43,6 +43,65 @@
         .tokenomics-section {
             background-color: #f8f9fc;
         }
+        .payments-card {
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .payment-item {
+            border-left: 3px solid var(--secondary);
+            transition: all 0.3s;
+        }
+        .payment-item:hover {
+            background-color: #f8f9fc;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .pagination .page-link {
+            color: var(--primary);
+        }
+        .account-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .account-link:hover {
+            text-decoration: underline;
+        }
+        /* Token Data Specific Styles */
+        .token-metric {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .token-metric.loading {
+            color: transparent !important;
+            min-height: 24px;
+        }
+        .token-metric.loading::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4e73df;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        #tokenDataStatus {
+            min-height: 40px;
+            margin-top: 10px;
+        }
+        .price-subtext {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -59,6 +118,7 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
                     <li class="nav-item"><a class="nav-link" href="#tokenomics">Tokenomics</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#payments">Payments</a></li>
                     <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
                     <li class="nav-item"><a class="nav-link btn btn-primary ms-2" href="{% url 'insurance-dashboard' %}">Launch App</a></li>
                 </ul>
@@ -80,35 +140,55 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="token-card p-4 bg-white text-dark mt-4 mt-lg-0">
-                        <h3 class="mb-4"><i class="fas fa-coins me-2"></i>HLT Token Live Data</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3><i class="fas fa-coins me-2"></i>HLT Token Live Data</h3>
+                            <button id="refreshTokenData" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="stat-card p-3">
                                     <h6 class="text-muted">PRICE</h6>
-                                    <h3 class="fw-bold" id="tokenPrice">$0.10</h3>
+                                    <h3 class="fw-bold token-metric" id="tokenPrice">$0.00</h3>
+                                    <small class="text-muted price-subtext" id="tokenPriceKES">KES 0.00</small>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="stat-card p-3">
                                     <h6 class="text-muted">MARKET CAP</h6>
-                                    <h3 class="fw-bold" id="marketCap">$0.00</h3>
+                                    <h3 class="fw-bold token-metric" id="marketCap">$0.00</h3>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="stat-card p-3">
                                     <h6 class="text-muted">CIRCULATING</h6>
-                                    <h3 class="fw-bold" id="circulatingSupply">0 HLT</h3>
+                                    <h3 class="fw-bold token-metric" id="circulatingSupply">0 HLT</h3>
+                                    <small class="text-muted price-subtext" id="circulatingPercent">0% of total</small>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="stat-card p-3">
                                     <h6 class="text-muted">TOTAL SUPPLY</h6>
-                                    <h3 class="fw-bold" id="totalSupply">100,000,000 HLT</h3>
+                                    <h3 class="fw-bold token-metric" id="totalSupply">0 HLT</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="priceChart"></canvas>
+                        <div id="tokenDataStatus"></div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="priceChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="supplyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end mt-2">
+                            <small class="text-muted" id="lastUpdated"></small>
                         </div>
                     </div>
                 </div>
@@ -155,52 +235,33 @@
         </div>
     </section>
 
-    <!-- Tokenomics Section -->
-    <section id="tokenomics" class="py-5 tokenomics-section">
+    <!-- Recent Payments Section -->
+    <section id="payments" class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="fw-bold">HLT Tokenomics</h2>
-                <p class="lead text-muted">Understanding the Healthra Token Economy</p>
+                <h2 class="fw-bold">Recent Insurance Payments</h2>
+                <p class="lead text-muted">Latest transactions on the Healthra network</p>
             </div>
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h4 class="card-title"><i class="fas fa-chart-pie me-2"></i>Token Distribution</h4>
-                            <div class="chart-container">
-                                <canvas id="distributionChart"></canvas>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="payments-card card">
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Payment Activity</h5>
+                                <div>
+                                    <small class="text-muted me-2" id="topicIdDisplay"></small>
+                                    <small class="text-muted" id="lastUpdated"></small>
+                                    <span class="spinner-border spinner-border-sm text-primary d-none" id="refreshSpinner"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h4 class="card-title"><i class="fas fa-users me-2"></i>Top Token Holders</h4>
-                            <div class="table-responsive">
-                                <table class="table" id="holdersTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Rank</th>
-                                            <th>Address</th>
-                                            <th>Balance</th>
-                                            <th>Percentage</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Filled by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title"><i class="fas fa-chart-line me-2"></i>Token Metrics</h4>
-                            <div class="chart-container">
-                                <canvas id="metricsChart"></canvas>
+                        <div class="card-body p-0">
+                            <div id="paymentsContainer">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,6 +269,77 @@
             </div>
         </div>
     </section>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="supplyChart"></canvas>
+            </div>
+        </div>
+    </div>
+        <!-- Tokenomics Section -->
+        <section id="tokenomics" class="py-5 tokenomics-section">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold">HLT Tokenomics</h2>
+                    <p class="lead text-muted">Understanding the Healthra Token Economy</p>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fas fa-chart-pie me-2"></i>Token Distribution</h4>
+                                <div class="chart-container">
+                                    <canvas id="distributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fas fa-users me-2"></i>Top Token Holders</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="holdersTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center">Rank</th>
+                                                <th>Address</th>
+                                                <th class="text-end">Balance</th>
+                                                <th class="text-end">Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Will be filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <nav aria-label="Token holders pagination">
+                                    <ul class="pagination justify-content-center mt-3" id="holdersPagination">
+                                        <!-- Will be filled by JavaScript -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fas fa-chart-line me-2"></i>Token Metrics</h4>
+                                <div class="chart-container">
+                                    <canvas id="metricsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
     <!-- About Section -->
     <section id="about" class="py-5">
@@ -240,6 +372,7 @@
                     <ul class="list-unstyled">
                         <li><a href="#features" class="text-muted">Features</a></li>
                         <li><a href="#tokenomics" class="text-muted">Tokenomics</a></li>
+                        <li><a href="#payments" class="text-muted">Payments</a></li>
                         <li><a href="#about" class="text-muted">About</a></li>
                     </ul>
                 </div>
@@ -262,221 +395,751 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Token Data Fetching and Display
-        async function fetchTokenData() {
-            try {
-                // Fetch token info
-                const tokenInfoResponse = await fetch('wallet/api/token-info/');
-                const tokenInfo = await tokenInfoResponse.json();
-                
-                // Fetch account balance (assuming this is platform treasury)
-                const balanceResponse = await fetch('wallet/api/account-balance/');
-                const balanceData = await balanceResponse.json();
-                
-                // Fetch token holders
-                const holdersResponse = await fetch('wallet/api/token-holders/');
-                const holdersData = await holdersResponse.json();
-                
-                // Update DOM elements
-                updateTokenMetrics(tokenInfo, balanceData);
-                updateDistributionChart(tokenInfo);
-                updateHoldersTable(holdersData);
-                updatePriceChart();
-                
-            } catch (error) {
-                console.error('Error fetching token data:', error);
-            }
-        }
-        
-        function updateTokenMetrics(tokenInfo, balanceData) {
-            // Example price calculation (replace with real data)
-            const price = 0.15; // This should come from your API or price oracle
-            const circulatingSupply = tokenInfo.total_supply - balanceData.balance;
+        // Token Data Manager - Complete Implementation
+        const TokenDataManager = {
+            // Configuration
+            config: {
+                tokenId: "0.0.5808184", // Replace with your HLT token ID
+                treasuryAccount: "0.0.5773854", // Your main holding account
+                fixedPriceKES: 100, // 1 HLT = 100 KES
+                totalSupply: 100000000, // 1 billion HLT (adjust to your total supply)
+                updateInterval: 2000 // 30 seconds
+            },
             
-            // Animate numbers
-            new CountUp('tokenPrice', price, {
-                decimalPlaces: 4,
-                prefix: '$'
-            }).start();
+            // State
+            state: {
+                priceHistory: [],
+                lastUpdate: null,
+                currentRate: null,
+                priceChart: null,
+                supplyChart: null
+            },
             
-            new CountUp('marketCap', price * tokenInfo.total_supply, {
-                decimalPlaces: 0,
-                prefix: '$',
-                suffix: ' USD'
-            }).start();
+            // Initialize everything
+            init: function() {
+                this.initializeCharts();
+                this.updateTokenMetrics();
+                setInterval(() => this.updateTokenMetrics(), this.config.updateInterval);
+                
+                // Setup refresh button
+                document.getElementById('refreshTokenData').addEventListener('click', () => {
+                    this.updateTokenMetrics();
+                });
+            },
             
-            new CountUp('circulatingSupply', circulatingSupply, {
-                decimalPlaces: 0,
-                suffix: ' HLT'
-            }).start();
+            // Initialize charts
+            initializeCharts: function() {
+                this.state.priceChart = new Chart(
+                    document.getElementById('priceChart').getContext('2d'),
+                    this.getPriceChartConfig()
+                );
+                
+                this.state.supplyChart = new Chart(
+                    document.getElementById('supplyChart').getContext('2d'),
+                    this.getSupplyChartConfig()
+                );
+            },
             
-            document.getElementById('totalSupply').textContent = 
-                tokenInfo.total_supply.toLocaleString() + ' HLT';
-        }
-        
-        function updateDistributionChart(tokenInfo) {
-            const ctx = document.getElementById('distributionChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Circulating Supply', 'Platform Reserve', 'Team', 'Ecosystem Fund'],
-                    datasets: [{
-                        data: [60, 20, 10, 10], // Example distribution
-                        backgroundColor: [
-                            '#4e73df',
-                            '#1cc88a',
-                            '#36b9cc',
-                            '#f6c23e'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
+            // Get KES to USD exchange rate
+            getKESToUSDRate: async function() {
+                try {
+                    // In production, replace with your own API endpoint that caches rates
+                    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                    const data = await response.json();
+                    return 1 / data.rates.KES; // Convert KES to USD
+                } catch (error) {
+                    console.error("Error fetching exchange rate:", error);
+                    return 0.007; // Fallback rate (approx 1 KES = 0.007 USD)
+                }
+            },
+            
+            // Get HLT balance from Hedera Mirror Node
+            getHLTBalance: async function(accountId) {
+                try {
+                    const response = await fetch(
+                        `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/tokens?token.id=${this.config.tokenId}`
+                    );
+                    const data = await response.json();
+                    return data.tokens[0]?.balance || 0;
+                } catch (error) {
+                    console.error("Error fetching HLT balance:", error);
+                    return 0;
+                }
+            },
+            
+            // Main function to update all token metrics
+            updateTokenMetrics: async function() {
+                try {
+                    this.showLoadingState();
+                    
+                    // Get data in parallel
+                    const [exchangeRate, treasuryBalance] = await Promise.all([
+                        this.getKESToUSDRate(),
+                        this.getHLTBalance(this.config.treasuryAccount)
+                    ]);
+                    
+                    // Update state
+                    this.state.currentRate = exchangeRate;
+                    this.state.lastUpdate = new Date();
+                    
+                    // Calculate metrics
+                    const priceUSD = this.config.fixedPriceKES * exchangeRate;
+                    const circulatingSupply = this.config.totalSupply - treasuryBalance;
+                    const marketCapUSD = circulatingSupply * priceUSD;
+                    
+                    // Update price history
+                    this.updatePriceHistory(priceUSD);
+                    
+                    // Update UI
+                    this.updateMetricsDisplay({
+                        priceUSD,
+                        priceKES: this.config.fixedPriceKES,
+                        circulatingSupply,
+                        marketCapUSD,
+                        treasuryBalance
+                    });
+                    
+                    // Update charts
+                    this.updateCharts(circulatingSupply, treasuryBalance);
+                    
+                } catch (error) {
+                    console.error("Error updating token metrics:", error);
+                    this.showErrorState(error.message);
+                } finally {
+                    this.hideLoadingState();
+                }
+            },
+            
+            // Update all charts
+            updateCharts: function(circulatingSupply, treasuryBalance) {
+                // Price chart
+                this.state.priceChart.data.datasets[0].data = this.state.priceHistory;
+                this.state.priceChart.update();
+                
+                // Supply chart
+                this.state.supplyChart.data.datasets[0].data = [
+                    circulatingSupply,
+                    treasuryBalance
+                ];
+                this.state.supplyChart.update();
+            },
+            
+            // Update price history (simulated 30-day data)
+            updatePriceHistory: function(currentPrice) {
+                // If no history, create initial data
+                if (this.state.priceHistory.length === 0) {
+                    const now = new Date();
+                    for (let i = 30; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(date.getDate() - i);
+                        
+                        // Simulate price movement
+                        const fluctuation = currentPrice * (Math.random() * 0.03 - 0.015);
+                        this.state.priceHistory.push(currentPrice + fluctuation);
+                    }
+                } else {
+                    // Add new data point with slight variation
+                    const fluctuation = currentPrice * (Math.random() * 0.02 - 0.01);
+                    this.state.priceHistory.push(currentPrice + fluctuation);
+                    
+                    // Keep only last 30 days
+                    if (this.state.priceHistory.length > 30) {
+                        this.state.priceHistory.shift();
                     }
                 }
-            });
-        }
-        
-        function updateHoldersTable(holdersData) {
-            const tbody = document.querySelector('#holdersTable tbody');
-            tbody.innerHTML = '';
+            },
             
-            holdersData.holders.slice(0, 5).forEach((holder, index) => {
-                const percentage = (holder.balance / holdersData.total_circulating * 100).toFixed(2);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td class="text-truncate" style="max-width: 120px">${holder.account}</td>
-                    <td>${holder.balance.toLocaleString()} HLT</td>
-                    <td>${percentage}%</td>
+            // Update the metrics display
+            updateMetricsDisplay: function(data) {
+                const { priceUSD, priceKES, circulatingSupply, marketCapUSD } = data;
+                
+                document.getElementById('tokenPrice').textContent = `$${priceUSD.toFixed(4)}`;
+                document.getElementById('tokenPriceKES').textContent = `KES ${priceKES.toFixed(2)}`;
+                document.getElementById('marketCap').textContent = `$${this.formatNumber(marketCapUSD, true)}`;
+                document.getElementById('circulatingSupply').textContent = `${this.formatNumber(circulatingSupply)} HLT`;
+                document.getElementById('circulatingPercent').textContent = 
+                    `${((circulatingSupply / this.config.totalSupply) * 100).toFixed(2)}% of total`;
+                document.getElementById('totalSupply').textContent = `${this.formatNumber(this.config.totalSupply)} HLT`;
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${this.state.lastUpdate.toLocaleTimeString()}`;
+            },
+            
+            // Format numbers with commas
+            formatNumber: function(num, isUSD = false) {
+                if (isUSD) {
+                    if (num >= 1000000000) {
+                        return `$${(num / 1000000000).toFixed(2)}B`;
+                    }
+                    if (num >= 1000000) {
+                        return `$${(num / 1000000).toFixed(2)}M`;
+                    }
+                    return `$${num.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                }
+                return num.toLocaleString('en-US');
+            },
+            
+            // Chart configurations
+            getPriceChartConfig: function() {
+                return {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 30}, (_, i) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - (30 - i));
+                            return date.toLocaleDateString();
+                        }),
+                        datasets: [{
+                            label: 'HLT Price (USD)',
+                            data: [],
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(4);
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: 6
+                                }
+                            }
+                        }
+                    }
+                };
+            },
+            
+            getSupplyChartConfig: function() {
+                return {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Circulating Supply', 'Treasury Reserve'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: [
+                                '#1cc88a',
+                                '#4e73df'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.raw.toLocaleString()} HLT`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+            },
+            
+            // UI State Management
+            showLoadingState: function() {
+                document.querySelectorAll('.token-metric').forEach(el => {
+                    el.classList.add('loading');
+                });
+                document.getElementById('tokenDataStatus').innerHTML = `
+                    <div class="d-flex align-items-center text-primary">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Updating token data...
+                    </div>
                 `;
-                tbody.appendChild(tr);
-            });
-        }
-        
-        function updatePriceChart() {
-            const ctx = document.getElementById('priceChart').getContext('2d');
+            },
             
-            // Example price history (replace with real data from your API)
-            const labels = [];
-            const prices = [];
-            const now = new Date();
+            hideLoadingState: function() {
+                document.querySelectorAll('.token-metric').forEach(el => {
+                    el.classList.remove('loading');
+                });
+                document.getElementById('tokenDataStatus').innerHTML = '';
+            },
             
-            for (let i = 30; i >= 0; i--) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString());
-                
-                // Simulate price movement
-                const basePrice = 0.15;
-                const fluctuation = Math.random() * 0.03 - 0.015;
-                prices.push(basePrice + fluctuation);
+            showErrorState: function(message) {
+                document.getElementById('tokenDataStatus').innerHTML = `
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <div>
+                            ${message || 'Failed to update token data'}
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="TokenDataManager.updateTokenMetrics()">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'HLT Price (USD)',
-                        data: prices,
-                        borderColor: '#4e73df',
-                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toFixed(4);
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 0,
-                                autoSkip: true,
-                                maxTicksLimit: 6
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function updateMetricsChart() {
-            const ctx = document.getElementById('metricsChart').getContext('2d');
-            
-            // Example metrics (replace with real data)
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Total Supply', 'Circulating', 'Burned', 'Staked'],
-                    datasets: [{
-                        label: 'HLT Tokens',
-                        data: [100000000, 60000000, 5000000, 25000000],
-                        backgroundColor: [
-                            '#4e73df',
-                            '#1cc88a',
-                            '#5a5c69',
-                            '#f6c23e'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.raw.toLocaleString() + ' HLT';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return (value / 1000000) + 'M';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Initialize all charts when page loads
+        };
+
+        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            fetchTokenData();
-            updateMetricsChart();
+            TokenDataManager.init();
             
-            // Refresh data every 60 seconds
-            setInterval(fetchTokenData, 60000);
+            // Initialize other parts of your application...
+            // (Keep your existing initialization code for other components)
         });
+
+        // Update the fetchPaymentData function in your existing template
+async function fetchPaymentData() {
+    try {
+        // Show loading state
+        const container = document.getElementById('paymentsContainer');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        const response = await fetch('/wallet/api/insurance-payments/');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update topic info display
+        const topicIdElement = document.getElementById('topicIdDisplay');
+        if (topicIdElement && data.topic_info) {
+            topicIdElement.textContent = `Topic: ${data.topic_info.topic_id}`;
+        }
+        
+        // Update last updated time
+        const lastUpdatedElement = document.getElementById('paymentsLastUpdated');
+        if (lastUpdatedElement) {
+            lastUpdatedElement.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        // Display the data
+        if (data.payments && data.payments.length > 0) {
+            container.innerHTML = `
+                <div class="list-group list-group-flush">
+                    ${data.payments.map(payment => `
+                        <div class="list-group-item payment-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Insurance Policy #${payment.insurance_id || 'N/A'}</h6>
+                                    <small class="text-muted">
+                                        ${payment.formatted_date || payment.timestamp || 'Unknown date'}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success rounded-pill">
+                                        $${payment.amount ? payment.amount.toFixed(2) : '0.00'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No recent payments found
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error fetching payment data:', error);
+        const container = document.getElementById('paymentsContainer');
+        container.innerHTML = `
+            <div class="text-center py-4 text-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Failed to load payment data
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="fetchPaymentData()">
+                    <i class="fas fa-sync-alt me-1"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+
+
     </script>
+<script>
+    // Token Holders Manager
+    const TokenHoldersManager = {
+        config: {
+            decimals: 8 // Hedera typically uses 8 decimal places
+        },
+    
+        init: function() {
+            this.fetchTokenHolders(1);
+        },
+    
+        fetchTokenHolders: async function(page = 1) {
+            try {
+                this.showLoadingState();
+                
+                const response = await fetch(`/wallet/api/token-holders/?page=${page}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    this.updateHoldersTable(data.holders, data.total_circulating);
+                    this.updatePagination(data.pagination);
+                } else {
+                    throw new Error(data.message || "Failed to load token holders");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                this.showErrorState(error.message);
+            }
+        },
+    
+        formatBalance: function(balance) {
+            // Convert from tiny units (10^8) to whole tokens
+            const wholeTokens = balance// / Math.pow(10, this.config.decimals);
+            
+            // Format with proper decimal places
+            if (wholeTokens >= 1000) {
+                return wholeTokens.toLocaleString('en-US', {maximumFractionDigits: 2});
+            } else if (wholeTokens >= 1) {
+                return wholeTokens.toLocaleString('en-US', {maximumFractionDigits: 4});
+            } else {
+                return wholeTokens.toLocaleString('en-US', {maximumFractionDigits: 8});
+            }
+        },
+    
+        updateHoldersTable: function(holders, totalCirculating) {
+            const tbody = document.querySelector('#holdersTable tbody');
+            if (!tbody) return;
+    
+            if (!holders || holders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">
+                            No token holders found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+    
+            tbody.innerHTML = holders.map((holder, index) => {
+                const formattedBalance = this.formatBalance(holder.balance);
+                const percentage = totalCirculating > 0 
+                    ? (holder.balance / totalCirculating * 100).toFixed(4)
+                    : '0.0000';
+                
+                return `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td>
+                            <a href="https://testnet.mirrornode.hedera.com/api/v1/accounts/${holder.account}" 
+                               target="_blank" class="account-link" title="View on Hedera Explorer">
+                                ${holder.account}
+                            </a>
+                        </td>
+                        <td class="text-end">${formattedBalance} HLT</td>
+                        <td class="text-end">${percentage}%</td>
+                    </tr>
+                `;
+            }).join('');
+        },
+    
+        updatePagination: function(pagination) {
+            const paginationEl = document.getElementById('holdersPagination');
+            if (!paginationEl) return;
+    
+            paginationEl.innerHTML = '';
+    
+            if (!pagination || pagination.total_pages <= 1) return;
+    
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${!pagination.has_prev ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+                <a class="page-link" href="#" aria-label="Previous" 
+                   onclick="TokenHoldersManager.fetchTokenHolders(${pagination.current_page - 1}); return false;">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            `;
+            paginationEl.appendChild(prevLi);
+    
+            // Page numbers
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                li.innerHTML = `
+                    <a class="page-link" href="#" 
+                       onclick="TokenHoldersManager.fetchTokenHolders(${i}); return false;">
+                        ${i}
+                    </a>
+                `;
+                paginationEl.appendChild(li);
+            }
+    
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${!pagination.has_next ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+                <a class="page-link" href="#" aria-label="Next" 
+                   onclick="TokenHoldersManager.fetchTokenHolders(${pagination.current_page + 1}); return false;">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            `;
+            paginationEl.appendChild(nextLi);
+        },
+    
+        showLoadingState: function() {
+            const tbody = document.querySelector('#holdersTable tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        },
+    
+        showErrorState: function(message) {
+            const tbody = document.querySelector('#holdersTable tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${message || 'Failed to load token holders'}
+                            <button class="btn btn-sm btn-outline-danger mt-2" 
+                                    onclick="TokenHoldersManager.init()">
+                                <i class="fas fa-sync-alt me-1"></i> Retry
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    };
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        TokenHoldersManager.init();
+    });
+    </script>
+    <script>
+        // Insurance Payments Manager - Complete Working Solution
+const InsurancePaymentsManager = {
+    init: function() {
+        this.fetchPayments();
+        // Refresh every 60 seconds
+        setInterval(() => this.fetchPayments(), 20000);
+    },
+
+    fetchPayments: async function() {
+        try {
+            this.showLoadingState();
+            
+            const response = await fetch('/wallet/api/insurance-payments/');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            
+            // Clear previous content
+            const container = document.getElementById('paymentsContainer');
+            container.innerHTML = '';
+            
+            // Display topic info
+            this.displayTopicInfo(data.topic_info || {}, container);
+            
+            // Display payments
+            this.displayPayments(data.payments || [], container);
+            
+            this.updateLastUpdated();
+            
+        } catch (error) {
+            console.error('Error fetching payments:', error);
+            this.showErrorState(error.message);
+        } finally {
+            this.hideLoadingSpinner();
+        }
+    },
+
+    displayTopicInfo: function(topicInfo, container) {
+        const topicInfoHtml = `
+            <div class="p-3 border-bottom bg-light">
+                <h5 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Message Information</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <div class="fw-semibold">Topic ID:</div>
+                        <div class="font-monospace">${topicInfo.topic_id || 'N/A'}</div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="fw-semibold">Memo:</div>
+                        <div>${topicInfo.memo || 'No memo available'}</div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="fw-semibold">Created:</div>
+                        <div>${this.formatHederaTimestamp(topicInfo.created_timestamp)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', topicInfoHtml);
+    },
+
+    displayPayments: function(payments, container) {
+        const paymentsHtml = `
+            <div class="p-3">
+                <h5 class="fw-bold mb-3"><i class="fas fa-receipt me-2"></i>Payment Transactions</h5>
+                ${payments.length === 0 ? `
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No payment transactions found in the last 24 hours
+                    </div>
+                ` : `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Policy ID</th>
+                                    <th>Timestamp</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${payments.map(payment => `
+                                    <tr>
+                                        <td>${payment.insurance_id || 'N/A'}</td>
+                                        <td>${this.formatDate(payment.timestamp || payment.formatted_date)}</td>
+                                        <td class="text-end">$${payment.amount?.toFixed(2) || '0.00'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', paymentsHtml);
+    },
+
+    formatHederaTimestamp: function(timestamp) {
+        if (!timestamp) return 'Unknown';
+        try {
+            if (timestamp.includes('.')) {
+                const [seconds, nanos] = timestamp.split('.');
+                const date = new Date(parseInt(seconds) * 1000);
+                return date.toLocaleString();
+            }
+            return new Date(timestamp).toLocaleString() || timestamp;
+        } catch (e) {
+            return timestamp;
+        }
+    },
+
+    formatDate: function(timestamp) {
+        if (!timestamp) return 'Unknown';
+        try {
+            return new Date(timestamp).toLocaleString() || timestamp;
+        } catch (e) {
+            return timestamp;
+        }
+    },
+
+    showLoadingState: function() {
+        const container = document.getElementById('paymentsContainer');
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading payment data...</p>
+            </div>
+        `;
+    },
+
+    hideLoadingSpinner: function() {
+        const spinner = document.getElementById('refreshSpinner');
+        if (spinner) spinner.classList.add('d-none');
+    },
+
+    showErrorState: function(message) {
+        const container = document.getElementById('paymentsContainer');
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                    <div>
+                        <h5 class="alert-heading">Error Loading Data</h5>
+                        <p class="mb-2">${message || 'Failed to load payment information'}</p>
+                        <button class="btn btn-sm btn-outline-danger" onclick="InsurancePaymentsManager.init()">
+                            <i class="fas fa-sync-alt me-1"></i> Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    updateLastUpdated: function() {
+        const lastUpdatedElement = document.getElementById('lastUpdated');
+        if (lastUpdatedElement) {
+            lastUpdatedElement.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+    }
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    InsurancePaymentsManager.init();
+});
+    </script>
+    <style>
+    /* Add to your existing CSS */
+    #holdersTable {
+        font-size: 0.9rem;
+    }
+    #holdersTable th {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .account-link {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    .account-link:hover {
+        text-decoration: underline;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    </style>
 </body>
 </html>

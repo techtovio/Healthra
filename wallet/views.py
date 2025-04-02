@@ -10,7 +10,6 @@ from .forms import TransferForm
 import os
 from dotenv import load_dotenv
 from wallet.contracts.hedera import load_operator_credentials, create_new_account, query_balance, transfer_token
-load_dotenv()
 from wallet.contracts import mirror_node
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
@@ -24,11 +23,103 @@ from hiero_sdk_python import (
     TransferTransaction,
     Network,
     TokenAssociateTransaction,
-    TokenId
+    TokenId,
+    TopicMessageQuery
 )
 from insurance.models import InsurancePayment
 from decimal import Decimal
 from django.http import HttpResponseRedirect
+from django.views import View
+from decimal import Decimal
+import json
+from datetime import datetime, timedelta
+import base64
+
+
+load_dotenv()
+def get_insurance_payments(request):
+    """Query Hedera Mirror API for insurance payment messages with proper endpoint usage"""
+    MIRROR_NODE_URL = "https://testnet.mirrornode.hedera.com"
+    TOPIC_ID = "0.0.5811308"  # Replace with your actual topic ID
+    LIMIT = 10
+
+    try:
+        # First verify the topic exists
+        topic_response = requests.get(
+            f"{MIRROR_NODE_URL}/api/v1/topics/{TOPIC_ID}",
+            headers={'Accept': 'application/json'},
+            timeout=5
+        )
+        
+        if topic_response.status_code == 404:
+            return JsonResponse({'error': f"Topic {TOPIC_ID} not found"}, status=404)
+        
+        topic_response.raise_for_status()
+        
+        # Get messages from the topic
+        messages_response = requests.get(
+            f"{MIRROR_NODE_URL}/api/v1/topics/{TOPIC_ID}/messages",
+            params={
+                "limit": LIMIT,
+                "order": "desc"  # Newest messages first
+            },
+            headers={'Accept': 'application/json'},
+            timeout=10
+        )
+        messages_response.raise_for_status()
+
+        messages = []
+        for msg in messages_response.json().get('messages', []):
+            try:
+                if not msg.get('message'):
+                    continue
+
+                # Decode and parse message content
+                content = base64.b64decode(msg['message']).decode('utf-8')
+                message_data = json.loads(content)
+
+                # Only process insurance payments
+                if message_data.get('type') != 'insurance_payment':
+                    continue
+
+                # Format the timestamp
+                consensus_ts = msg['consensus_timestamp']
+                try:
+                    dt = datetime.strptime(consensus_ts.split('.')[0], "%Y-%m-%dT%H:%M:%S")
+                    formatted_date = dt.strftime("%b %d, %Y %H:%M:%S")
+                except:
+                    formatted_date = consensus_ts
+
+                messages.append({
+                    'sequence_number': msg['sequence_number'],
+                    'insurance_id': message_data.get('insurance_id'),
+                    'amount': float(message_data.get('amount', 0)),
+                    'timestamp': consensus_ts,
+                    'formatted_date': formatted_date,
+                    'running_hash': msg.get('running_hash')
+                })
+
+            except (KeyError, ValueError, json.JSONDecodeError) as e:
+                continue
+
+        return JsonResponse({
+            'topic_info': {
+                'topic_id': TOPIC_ID,
+                'memo': topic_response.json().get('memo', ''),
+                'created_timestamp': topic_response.json().get('created_timestamp')
+            },
+            'payments': messages
+        })
+
+    except requests.RequestException as e:
+        error_msg = f"Mirror node API error: {str(e)}"
+        if hasattr(e, 'response'):
+            try:
+                error_details = e.response.json()
+                error_msg += f" - {error_details.get('_status', {}).get('messages', [''])[0]}"
+            except:
+                error_msg += f" (Status: {e.response.status_code})"
+        return JsonResponse({'error': error_msg}, status=500)
 
 @login_required
 def wallet_history(request):
