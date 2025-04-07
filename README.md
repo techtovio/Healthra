@@ -81,19 +81,19 @@ Planned with **CertiK** and **Halborn**
 
 ## **🤖 AI Integration Roadmap**  
 
-### **2024 Q3: AI-Assisted Claims Review**  
+### **2025 Q1: AI-Assisted Claims Review**  
 - NLP extracts data from medical bills  
 - ML model predicts claim validity  
 
-### **2024 Q4: Fraud Detection Engine**  
+### **2025 Q2: Fraud Detection Engine**  
 - Anomaly detection in claims history  
 - Real-time risk scoring  
 
-### **2025 Q1: Autonomous Adjustments**  
+### **2025 Q2: Autonomous Adjustments**  
 - AI negotiates claim disputes  
 - Predictive analytics for policy pricing  
 
-### **2025 Q2: Personalized Insurance**  
+### **2025 Q3: Personalized Insurance**  
 - AI tailors policies based on patient history  
 - Dynamic premium adjustments  
 
